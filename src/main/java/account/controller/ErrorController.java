@@ -18,6 +18,7 @@ public class ErrorController {
 
     @ExceptionHandler
     public ResponseEntity<NotValidException> handlerNotValidPayment(ConstraintViolationException ex, WebRequest request) {
+
         NotValidException exception = new NotValidException(HttpStatus.BAD_REQUEST, request.getDescription(false).substring(4), ex.getMessage().replaceAll(".*\\.",""));
         return new ResponseEntity<>(exception, HttpStatus.BAD_REQUEST);
     }
