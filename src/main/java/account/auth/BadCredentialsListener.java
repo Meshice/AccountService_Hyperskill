@@ -1,4 +1,4 @@
-package account.configuration;
+package account.auth;
 
 import account.entity.User;
 import account.request.LockUnlockUserRequest;

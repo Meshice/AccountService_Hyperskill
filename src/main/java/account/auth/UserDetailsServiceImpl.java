@@ -1,5 +1,6 @@
-package account.entity;
+package account.auth;
 
+import account.entity.User;
 import account.userDAO.UserDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

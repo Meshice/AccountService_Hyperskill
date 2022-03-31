@@ -1,4 +1,4 @@
-package account.configuration;
+package account.auth;
 
 import account.service.UserService;
 import account.userDAO.UserDAO;

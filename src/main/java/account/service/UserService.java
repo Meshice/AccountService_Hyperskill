@@ -22,6 +22,8 @@ public interface UserService {
 
     public User signIn(UserDetails userDetails);
 
+    public User findUserByUsername(String username);
+
     public ResponseEntity<PasswordChangeSuccessResponse> changePassword(PasswordChangeRequest changeRequest, UserDetails userDetails, BindingResult result);
 
     public ResponseEntity<PaymentAddSuccessResponse> addPayment(List<Payment> request);

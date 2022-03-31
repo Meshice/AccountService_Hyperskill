@@ -141,25 +141,6 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public int findUserByEmail(String email) {
-        String sqlRequestAddNew = "SELECT id FROM users WHERE email = LOWER(?)";
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestAddNew)) {
-                preparedStatement.setString(1, email);
-                ResultSet resultSet = preparedStatement.executeQuery();
-                if (resultSet.next()) {
-                    return resultSet.getInt("id");
-                } else {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-                }
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
     public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment) {
         String sqlRequestAddNew = "UPDATE payments SET salary = ? WHERE employee = LOWER(?) AND period = ?";
         try (Connection connection = dataSource.getConnection()) {

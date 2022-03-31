@@ -1,4 +1,4 @@
-package account.configuration;
+package account.auth;
 
 import account.service.Event;
 import account.service.LogService;

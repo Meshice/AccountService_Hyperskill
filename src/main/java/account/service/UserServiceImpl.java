@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
             retrievedUser.setRole("ROLE_USER");
         }
         userDAO.save(retrievedUser);
-        retrievedUser.setId(userDAO.findUserByEmail(retrievedUser.getEmail()));
+        retrievedUser.setId(userDAO.findByEmailIgnoreCase(retrievedUser.getEmail()).getId());
         retrievedUser.setRoles(List.of(retrievedUser.getRole().split(" ")));
 
         return retrievedUser;
@@ -256,4 +256,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public User findUserByUsername(String username) {
+        return userDAO.findByEmailIgnoreCase(username);
+    }
 }

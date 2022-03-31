@@ -12,9 +12,15 @@ import java.util.List;
 
 public interface UserDAO {
 
+    void save(User user);
+
     User findByEmailIgnoreCase(String email);
 
-    void save(User user);
+    List<User> getAllUsersOrderById();
+
+    int getUserCount();
+
+    public void deleteUser(String email);
 
     void changePassword(int id, String newPassword);
 
@@ -22,17 +28,9 @@ public interface UserDAO {
 
     boolean findEmailPeriodUnique(Payment payment);
 
-    int findUserByEmail(String email);
-
     public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
 
     public List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee);
-
-    int getUserCount();
-
-    List<User> getAllUsersOrderById();
-
-    public void deleteUser(String email);
 
     public void updatePersonRoles(User user);
 
