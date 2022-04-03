@@ -25,6 +25,26 @@ public class UserDAOImpl implements UserDAO {
     DataSource dataSource;
 
     @Override
+    public void update(User user) {
+        String sqlUpdateUserRequest = "UPDATE users SET email = ?, name = ?, lastname = ?, password = ?, role = ?, attempt = ?, locked = ?";
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdateUserRequest)) {
+                preparedStatement.setString(1, user.getEmail());
+                preparedStatement.setString(2, user.getName());
+                preparedStatement.setString(3, user.getLastname());
+                preparedStatement.setString(4, user.getPassword());
+                preparedStatement.setString(5, user.getRole());
+                preparedStatement.setInt(6, user.getAttemptsForLogging());
+                preparedStatement.setBoolean(7, user.isLocked());
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public User findByEmailIgnoreCase(String email) {
         String sqlRequest = "SELECT * FROM users WHERE email = LOWER(?)";
         try (Connection connection = dataSource.getConnection()) {
@@ -88,19 +108,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
-    @Override
-    public void updatePersonRoles(User user) {
-        String sqlUpdatePersonRoles = "UPDATE users SET role = ? WHERE id = ?";
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdatePersonRoles)) {
-                preparedStatement.setString(1, user.getRole());
-                preparedStatement.setInt(2, user.getId());
-                preparedStatement.execute();
-            }
-        } catch (SQLException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @Override
     public void addPayment(List<Payment> payment) {
@@ -149,21 +156,6 @@ public class UserDAOImpl implements UserDAO {
                 preparedStatement.setString(2, payment.getEmployee());
                 preparedStatement.setString(3, payment.getPeriod());
                 preparedStatement.execute();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public int getUserCount() {
-        String sqlGetUserCount = "SELECT COUNT(*) FROM users";
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlGetUserCount)) {
-                ResultSet resultSet = preparedStatement.executeQuery();
-                resultSet.next();
-                return resultSet.getInt(1);
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -229,38 +221,6 @@ public class UserDAOImpl implements UserDAO {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    }
-
-    @Override
-    public void decreaseAttempt(String email) {
-        String sqlDecreaseAttempt = "UPDATE users SET attempt = attempt - 1 WHERE email = LOWER(?)";
-        try (Connection connection = dataSource.getConnection()) {
-
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlDecreaseAttempt)) {
-                preparedStatement.setString(1,email);
-                preparedStatement.execute();
-            }
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public void returnUserAttempt(String email) {
-        String sqlReturnUserAttempt = "UPDATE users SET attempt = 5 WHERE email = LOWER(?)";
-        try (Connection connection = dataSource.getConnection()) {
-
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlReturnUserAttempt)) {
-                preparedStatement.setString(1,email);
-                preparedStatement.executeUpdate();
-            }
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     private List<User> mapRowToUserList(ResultSet resultSet) throws SQLException {

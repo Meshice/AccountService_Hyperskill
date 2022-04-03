@@ -12,10 +12,11 @@ import org.springframework.stereotype.Component;
 public class LoginSuccessListener implements ApplicationListener<AuthenticationSuccessEvent> {
 
     @Autowired
-    UserDAO userDAO;
+    BruteForceProtectionService bruteForceProtectionService;
 
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
-        userDAO.returnUserAttempt(event.getAuthentication().getName());
+        String username = event.getAuthentication().getName();
+        bruteForceProtectionService.resetBruteForceCounter(username);
     }
 }

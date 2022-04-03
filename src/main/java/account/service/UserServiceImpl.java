@@ -13,6 +13,7 @@ import account.response.PaymentUserInfo;
 import account.userDAO.UserDAO;
 import org.apache.juli.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,37 +45,26 @@ public class UserServiceImpl implements UserService {
     LogService service;
 
 
-    private static final List<String> breachedPasswords = List.of("PasswordForJanuary", "PasswordForFebruary", "PasswordForMarch", "PasswordForApril",
-            "PasswordForMay", "PasswordForJune", "PasswordForJuly", "PasswordForAugust",
-            "PasswordForSeptember", "PasswordForOctober", "PasswordForNovember", "PasswordForDecember");
-
-    private static final List<String> roles = List.of("ROLE_USER","ROLE_ADMINISTRATOR","ROLE_ACCOUNTANT","ROLE_AUDITOR");
-
+    private final List<String> allRoles = List.of("ROLE_USER","ROLE_ADMINISTRATOR","ROLE_ACCOUNTANT","ROLE_AUDITOR");
 
     @Override
-    public User signUp(User retrievedUser, BindingResult bindingResult) {
-        checkShortPassword(bindingResult, "password");
-        checkBreachedPasswords(retrievedUser.getPassword());
-        if (checkEmailUserExist(retrievedUser.getEmail())) {
+    public User signUp(User user) {
+        String email = user.getEmail();
+        if (checkEmailUserExist(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User exist!");
         }
-        retrievedUser.setPassword(passwordEncoder.encode(retrievedUser.getPassword()));
-        if (userDAO.getUserCount() == 0) {
-            retrievedUser.setRole("ROLE_ADMINISTRATOR");
-        } else {
-            retrievedUser.setRole("ROLE_USER");
-        }
-        userDAO.save(retrievedUser);
-        retrievedUser.setId(userDAO.findByEmailIgnoreCase(retrievedUser.getEmail()).getId());
-        retrievedUser.setRoles(List.of(retrievedUser.getRole().split(" ")));
-
-        return retrievedUser;
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        String defaultRole = "ROLE_USER";
+        user.setRole(defaultRole);
+        user.setRoles(List.of(defaultRole));
+        userDAO.save(user);
+        int id = userDAO.findByEmailIgnoreCase(email).getId();
+        user.setId(id);
+        return user;
     }
 
     @Override
     public ResponseEntity<PasswordChangeSuccessResponse> changePassword(PasswordChangeRequest changeRequest, UserDetails userDetails, BindingResult bindingResult) {
-        checkShortPassword(bindingResult, "new_password");
-        checkBreachedPasswords(changeRequest.getNew_password());
         checkSamePassword(changeRequest.getNew_password(), userDetails);
         User userNewPassword = userDAO.findByEmailIgnoreCase(userDetails.getUsername());
         userNewPassword.setPassword(passwordEncoder.encode(changeRequest.getNew_password()));
@@ -101,36 +91,59 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void update(User user) {
+        userDAO.update(user);
+    }
+
+    @Override
     public User changeUserRole(UserRoleChangeRequest request) {
-        User updatedUser = userDAO.findByEmailIgnoreCase(request.getUser());
-        if (updatedUser == null) {
+        User user = userDAO.findByEmailIgnoreCase(request.getUser());
+
+        if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
         }
-        request.setRole("ROLE_" + request.getRole());
-        if (!roles.contains(request.getRole())) {
+
+        String newRole = "ROLE_" + request.getRole();
+        if (!allRoles.contains(newRole)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found!");
         }
+
+        List<String> userRoles = user.getRoles();
         if (request.getOperation().equals("REMOVE")) {
-            if (!updatedUser.getRoles().contains(request.getRole())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user does not have a role!");
-            }
-            if (request.getRole().equals("ROLE_ADMINISTRATOR")) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove ADMINISTRATOR role!");
-            }
-            if (updatedUser.getRoles().size() == 1) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user must have at least one role!");
-            }
-            updatedUser.setRole(updatedUser.getRole().replaceAll(request.getRole(),"").strip());
+            removeUserRole(newRole, user);
         } else {
-            if (updatedUser.getRoles().contains(request.getRole())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user already have this role!");
-            }
-            checkRoleGroupIntersection(request.getRole(), updatedUser.getRoles());
-            updatedUser.setRole(request.getRole() + " " + updatedUser.getRole());
+            addUserRole(newRole, user);
         }
-        userDAO.updatePersonRoles(updatedUser);
-        updatedUser.setRoles(List.of(updatedUser.getRole().split(" ")));
-        return updatedUser;
+
+        String userRolesString = userRoles.stream().reduce((s, s2) -> s + " " + s2).orElseThrow();
+        user.setRole(userRolesString);
+        user.setRoles(userRoles);
+
+        userDAO.update(user);
+        return user;
+    }
+
+    private void addUserRole(String addRole, User user) {
+        List<String> userRoles = user.getRoles();
+        if (userRoles.contains(addRole)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user already have this role!");
+        }
+        checkRoleGroupIntersection(addRole, userRoles);
+        userRoles.add(addRole);
+    }
+
+    private void removeUserRole(String deleteRole, User user) {
+        List<String> userRoles = user.getRoles();
+        if (!userRoles.contains(deleteRole)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user does not have a role!");
+        }
+        if (deleteRole.equals("ROLE_ADMINISTRATOR")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove ADMINISTRATOR role!");
+        }
+        if (userRoles.size() == 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user must have one role at least!");
+        }
+        userRoles.remove(deleteRole);
     }
 
     private void checkRoleGroupIntersection(String addedRole, List<String> userRoles) {
@@ -226,16 +239,6 @@ public class UserServiceImpl implements UserService {
         userDAO.lockUnlockUser(request.getUser(), request.getOperation());
     }
 
-    @Override
-    public void returnUserAttempt(String email) {
-        userDAO.returnUserAttempt(email);
-    }
-
-    private void checkBreachedPasswords(String password) {
-        if (breachedPasswords.contains(password)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
-        }
-    }
 
     private boolean checkEmailUserExist(String email) {
         return userDAO.findByEmailIgnoreCase(email) != null;
@@ -245,14 +248,6 @@ public class UserServiceImpl implements UserService {
     private void checkSamePassword(String newPassword, UserDetails userDetails) {
         if (passwordEncoder.matches(newPassword, userDetails.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
-        }
-    }
-
-    private void checkShortPassword(BindingResult bindingResult, String checkedField) {
-        if (bindingResult.hasErrors() && bindingResult.getFieldError(checkedField) != null && bindingResult.getErrorCount() == 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be 12 chars minimum!");
-        } else if (bindingResult.hasErrors()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
     }
 

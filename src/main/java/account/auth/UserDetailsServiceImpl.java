@@ -16,11 +16,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User userTable = userDAO.findByEmailIgnoreCase(username);
-
-        if (userTable == null) {
+        User user = userDAO.findByEmailIgnoreCase(username);
+        if (user == null) {
             throw new UsernameNotFoundException("Not found" + username);
         }
-        return new UserDetailsImpl(userTable);
+        return new UserDetailsImpl(user);
     }
 }

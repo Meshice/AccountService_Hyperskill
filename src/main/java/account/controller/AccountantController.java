@@ -29,13 +29,12 @@ public class AccountantController {
     UserService userService;
 
     @PostMapping("/acct/payments")
-    public ResponseEntity<PaymentAddSuccessResponse> addPayments(@RequestBody(required = false) List<@Valid Payment> payments,
-                                                                 @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<PaymentAddSuccessResponse> addPayments(@RequestBody(required = false) List<@Valid Payment> payments) {
         return userService.addPayment(payments);
     }
 
     @PutMapping("/acct/payments")
-    public ResponseEntity<PaymentAddSuccessResponse> updatePayment(@RequestBody @Valid UpdatePaymentRequest payment, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<PaymentAddSuccessResponse> updatePayment(@RequestBody @Valid UpdatePaymentRequest payment) {
         userService.updatePaymentByEmployeePeriod(payment);
         return new ResponseEntity<>(new PaymentAddSuccessResponse("Updated successfully!"), HttpStatus.OK);
     }

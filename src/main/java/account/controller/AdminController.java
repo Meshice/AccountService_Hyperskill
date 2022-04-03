@@ -34,7 +34,7 @@ public class AdminController {
     LogService logService;
 
     @GetMapping("/user")
-    public ResponseEntity<List<User>> getAllUsers(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<User>> getAllUsers() {
         return new ResponseEntity<>(userService.getAllUsersOrderById(), HttpStatus.OK);
     }
 

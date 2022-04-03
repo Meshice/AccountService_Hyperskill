@@ -18,7 +18,9 @@ import java.util.List;
 
 public interface UserService {
 
-    public User signUp(User user, BindingResult result);
+    public void update(User user);
+
+    public User signUp(User user);
 
     public User signIn(UserDetails userDetails);
 
@@ -43,8 +45,6 @@ public interface UserService {
     public User changeUserRole(UserRoleChangeRequest request);
 
     public void lockUnlockUser(LockUnlockUserRequest request);
-
-    public void returnUserAttempt(String email);
 
 
 }

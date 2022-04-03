@@ -19,11 +19,11 @@ public class UserDetailsImpl implements UserDetails {
     private final List<GrantedAuthority> rolesAndAuthorities;
     private final boolean locked;
 
-    public UserDetailsImpl(User userTable) {
-        this.username = userTable.getEmail();
-        this.password = userTable.getPassword();
-        this.rolesAndAuthorities = Arrays.stream(userTable.getRole().split(" ")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-        this.locked = userTable.isLocked();
+    public UserDetailsImpl(User user) {
+        this.username = user.getEmail();
+        this.password = user.getPassword();
+        this.rolesAndAuthorities = Arrays.stream(user.getRole().split(" ")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        this.locked = !user.isLocked();
     }
 
     @Override
@@ -48,7 +48,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !locked;
+        return locked;
     }
 
     @Override

@@ -34,7 +34,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<User> signUp(@Valid @RequestBody User user, BindingResult bindingResult, HttpServletRequest request) {
-        User newUser = userService.signUp(user, bindingResult);
+        User newUser = userService.signUp(user);
         logService.addLogSignUp(Event.CREATE_USER, user, request);
         return new ResponseEntity<>(newUser, HttpStatus.OK);
     }

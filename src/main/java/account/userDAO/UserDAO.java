@@ -14,13 +14,13 @@ public interface UserDAO {
 
     void save(User user);
 
+    void update(User user);
+
     User findByEmailIgnoreCase(String email);
 
     List<User> getAllUsersOrderById();
 
-    int getUserCount();
-
-    public void deleteUser(String email);
+    void deleteUser(String email);
 
     void changePassword(int id, String newPassword);
 
@@ -28,15 +28,10 @@ public interface UserDAO {
 
     boolean findEmailPeriodUnique(Payment payment);
 
-    public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
+    void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
 
-    public List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee);
+    List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee);
 
-    public void updatePersonRoles(User user);
+    void lockUnlockUser(String email, String operation);
 
-    public void lockUnlockUser(String email, String operation);
-
-    public void decreaseAttempt(String email);
-
-    public void returnUserAttempt(String email);
 }

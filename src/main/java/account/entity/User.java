@@ -2,6 +2,9 @@ package account.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
@@ -13,6 +16,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@ToString
 public class User {
 
     @Id
@@ -40,106 +46,8 @@ public class User {
     private List<String> roles;
     @JsonIgnore
     @Column(name = "attempt")
-    private int attemptsForLogging;
+    private int attemptsForLogging = 5;
     @JsonIgnore
     @Column
     private boolean locked = false;
-
-    public User() {
-        this.attemptsForLogging = 5;
-    }
-
-    public User(String email, String name, String lastname, String password) {
-        this.email = email;
-        this.name = name;
-        this.lastname = lastname;
-        this.password = password;
-    }
-
-    public int getAttemptsForLogging() {
-        return attemptsForLogging;
-    }
-
-    public void setAttemptsForLogging(int attemptsForLogging) {
-        this.attemptsForLogging = attemptsForLogging;
-    }
-
-    public boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(boolean locked) {
-        this.locked = locked;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getLastname() {
-        return lastname;
-    }
-
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public List<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", email='" + email + '\'' +
-                ", name='" + name + '\'' +
-                ", lastname='" + lastname + '\'' +
-                ", password='" + password + '\'' +
-                ", role='" + role + '\'' +
-                ", roles=" + roles +
-                ", attemptsForLogging=" + attemptsForLogging +
-                ", locked=" + locked +
-                '}';
-    }
 }

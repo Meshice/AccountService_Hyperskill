@@ -20,35 +20,15 @@ import javax.servlet.http.HttpServletRequest;
 public class BadCredentialsListener implements ApplicationListener<AuthenticationFailureBadCredentialsEvent> {
 
     @Autowired
-    UserDAO userDAO;
-
-    @Autowired
-    LogService logService;
-
-    @Autowired
-    HttpServletRequest request;
-
+    BruteForceProtectionService bruteForceProtectionService;
 
     @Override
     public void onApplicationEvent(AuthenticationFailureBadCredentialsEvent event) {
-        String email = event.getAuthentication().getName();
-        User user = userDAO.findByEmailIgnoreCase(email);
-        if (user == null) {
-            logService.addLogFailedAuth(Event.LOGIN_FAILED, email, request.getRequestURI());
-            return;
-        }
-        if (user.getAttemptsForLogging() <= 1) {
-            if (user.getRole().equals("ROLE_ADMINISTRATOR")) {
-                return;
-            }
-            userDAO.lockUnlockUser(email,"LOCK");
-            userDAO.decreaseAttempt(email);
-            logService.addLogFailedAuth(Event.LOGIN_FAILED, email, request.getRequestURI());
-            logService.addLogUnlockLock(Event.BRUTE_FORCE, email, request.getRequestURI(), request);
-            logService.addLogUnlockLock(Event.LOCK_USER, email, String.format("Lock user %s",email.toLowerCase()), request);
-        } else {
-            userDAO.decreaseAttempt(email);
-            logService.addLogFailedAuth(Event.LOGIN_FAILED, email, request.getRequestURI());
-        }
+        String username = event.getAuthentication().getName();
+        bruteForceProtectionService.registerLoginFailure(username);
+//        logService.addLogFailedAuth(Event.LOGIN_FAILED, username, request.getRequestURI());
+//        logService.addLogUnlockLock(Event.BRUTE_FORCE, username, request.getRequestURI(), request);
+//        logService.addLogUnlockLock(Event.LOCK_USER, username, String.format("Lock user %s",username.toLowerCase()), request);
+
     }
 }
