@@ -1,0 +1,18 @@
+{
+  "properties": [
+    {
+      "name": "hibernate.dialect",
+      "type": "java.lang.String",
+      "description": "Description for hibernate.dialect."
+    },
+    {
+      "name": "validation.error-message.email",
+      "type": "java.lang.String",
+      "description": "Description for validation.error-message.email."
+    },
+    {
+      "name": "validation.error-message.email",
+      "type": "java.lang.String",
+      "description": "Description for validation.error-message.email."
+    }
+  ] }

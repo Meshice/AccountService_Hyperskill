@@ -1,21 +1,24 @@
 package account.service;
 
+import account.dto.LogDto;
 import account.entity.Log;
 import account.entity.User;
 import account.userDAO.LogDAO;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class LogServiceImpl implements LogService {
 
     @Autowired
     LogDAO logDAO;
+
+    private final ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public List<Log> getLogsOrderById() {
@@ -79,4 +82,5 @@ public class LogServiceImpl implements LogService {
         log.setPath(request.getRequestURI());
         logDAO.addLog(log);
     }
+
 }

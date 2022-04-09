@@ -1,35 +1,28 @@
 package account.service;
 
 
+import account.dto.DtoMarker;
+import account.dto.UserDto;
+import account.entity.EntityMarker;
 import account.entity.Payment;
 import account.entity.User;
 import account.request.LockUnlockUserRequest;
-import account.request.PasswordChangeRequest;
 import account.request.UpdatePaymentRequest;
 import account.request.UserRoleChangeRequest;
 import account.response.PasswordChangeSuccessResponse;
-import account.response.PaymentAddSuccessResponse;
 import account.response.PaymentUserInfo;
 import account.userDAO.UserDAO;
-import org.apache.juli.logging.Log;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Month;
-import java.time.format.TextStyle;
-import java.util.Collections;
+import java.lang.reflect.Type;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +37,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     LogService service;
 
+    private final ModelMapper modelMapper = new ModelMapper();
 
     private final List<String> allRoles = List.of("ROLE_USER","ROLE_ADMINISTRATOR","ROLE_ACCOUNTANT","ROLE_AUDITOR");
 
@@ -64,12 +58,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<PasswordChangeSuccessResponse> changePassword(PasswordChangeRequest changeRequest, UserDetails userDetails, BindingResult bindingResult) {
-        checkSamePassword(changeRequest.getNew_password(), userDetails);
-        User userNewPassword = userDAO.findByEmailIgnoreCase(userDetails.getUsername());
-        userNewPassword.setPassword(passwordEncoder.encode(changeRequest.getNew_password()));
-        userDAO.changePassword(userNewPassword.getId(), userNewPassword.getPassword());
-        return new ResponseEntity<>(new PasswordChangeSuccessResponse(userNewPassword.getEmail().toLowerCase(), "The password has been updated successfully"), HttpStatus.OK);
+    public PasswordChangeSuccessResponse changePassword(String newPassword, UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        String oldCryptPassword = userDetails.getPassword();
+        checkSamePassword(newPassword, oldCryptPassword);
+
+        User user = userDAO.findByEmailIgnoreCase(username);
+
+        String newCryptPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(newCryptPassword);
+
+        userDAO.update(user);
+        return new PasswordChangeSuccessResponse(username, "The password has been updated successfully");
+    }
+
+    private void checkSamePassword(String newPassword, String oldCryptPassword) {
+        if (passwordEncoder.matches(newPassword, oldCryptPassword)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
+        }
     }
 
     @Override
@@ -83,10 +89,12 @@ public class UserServiceImpl implements UserService {
         if (!checkUserExist(email)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
         }
+
         User user = userDAO.findByEmailIgnoreCase(email);
         if (user.getRoles().contains("ROLE_ADMINISTRATOR")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove ADMINISTRATOR role!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove a user with a ADMINISTRATOR role!");
         }
+
         userDAO.deleteUser(email);
     }
 
@@ -98,7 +106,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User changeUserRole(UserRoleChangeRequest request) {
         User user = userDAO.findByEmailIgnoreCase(request.getUser());
-
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
         }
@@ -128,6 +135,7 @@ public class UserServiceImpl implements UserService {
         if (userRoles.contains(addRole)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user already have this role!");
         }
+
         checkRoleGroupIntersection(addRole, userRoles);
         userRoles.add(addRole);
     }
@@ -143,6 +151,7 @@ public class UserServiceImpl implements UserService {
         if (userRoles.size() == 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user must have one role at least!");
         }
+
         userRoles.remove(deleteRole);
     }
 
@@ -155,76 +164,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User signIn(UserDetails userDetails) {
-        return userDAO.findByEmailIgnoreCase(userDetails.getUsername());
-    }
-
-    @Override
-    public ResponseEntity<PaymentAddSuccessResponse> addPayment(List<Payment> request) {
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Request body is missing");
-        }
-        userDAO.addPayment(request);
-        return new ResponseEntity<>(new PaymentAddSuccessResponse("Added successfully!"), HttpStatus.OK);
-    }
-
-
-    @Override
     public boolean checkUserExist(String employee) {
         return userDAO.findByEmailIgnoreCase(employee) != null;
-    }
-
-    @Override
-    public boolean checkUniquePayment(Payment payment) {
-        return userDAO.findEmailPeriodUnique(payment);
-    }
-
-    @Override
-    public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment) {
-        userDAO.updatePaymentByEmployeePeriod(payment);
-    }
-
-    @Override
-    public ResponseEntity getInfoUserByPeriod(String period, UserDetails userDetails) {
-        List<PaymentUserInfo> paymentUserInfoList = userDAO.getInfoUserByPeriod(period, userDetails.getUsername());
-        User user = userDAO.findByEmailIgnoreCase(userDetails.getUsername());
-        paymentUserInfoList.sort((p1, p2) -> {
-            Long monthP1 = Long.parseLong(p1.getPeriod().substring(0, 2));
-            Long yearP1 = Long.parseLong(p1.getPeriod().substring(3));
-            Long monthP2 = Long.parseLong(p2.getPeriod().substring(0, 2));
-            Long yearP2 = Long.parseLong(p2.getPeriod().substring(3));
-            if (yearP1.equals(yearP2)) {
-                return Long.compare(monthP2, monthP1);
-            } else {
-                return Long.compare(yearP2, yearP1);
-            }
-        });
-        for (PaymentUserInfo info : paymentUserInfoList) {
-            info.setPeriod(info.getPeriod().replaceFirst("0*(?=[^0])", ""));
-            Pattern pattern = Pattern.compile("\\d*");
-            Matcher matcher = pattern.matcher(info.getPeriod());
-            int numberOfMonth = 1;
-            if (matcher.find()) {
-                numberOfMonth = Integer.parseInt(matcher.group());
-            }
-            info.setPeriod(info.getPeriod().replaceFirst("\\d*", Month.of(numberOfMonth).getDisplayName(TextStyle.FULL, Locale.US)));
-            String salary = info.getSalary();
-            String dollarSalary = salary.substring(0, salary.length() - 2);
-            if (dollarSalary.equals("")) {
-                dollarSalary = "0";
-            }
-            String centSalary = salary.substring(salary.length() - 2);
-            info.setSalary(String.format("%s dollar(s) %s cent(s)", dollarSalary, centSalary));
-            info.setName(user.getName());
-            info.setLastname(user.getLastname());
-        }
-        if (paymentUserInfoList.isEmpty()) {
-            return new ResponseEntity(List.of(), HttpStatus.OK);
-        } else if (paymentUserInfoList.size() == 1) {
-            return new ResponseEntity(paymentUserInfoList.get(0), HttpStatus.OK);
-        } else {
-            return new ResponseEntity(paymentUserInfoList, HttpStatus.OK);
-        }
     }
 
     @Override
@@ -245,14 +186,9 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    private void checkSamePassword(String newPassword, UserDetails userDetails) {
-        if (passwordEncoder.matches(newPassword, userDetails.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
-        }
-    }
-
     @Override
     public User findUserByUsername(String username) {
         return userDAO.findByEmailIgnoreCase(username);
     }
+
 }

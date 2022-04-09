@@ -1,6 +1,10 @@
 package account.request;
 
 import account.annotation.EmployeeExist;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.validation.constraints.Min;
@@ -8,6 +12,10 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdatePaymentRequest {
 
     @Column
@@ -22,30 +30,4 @@ public class UpdatePaymentRequest {
     @NotNull(message = "Salary is null")
     private Long salary;
 
-    public UpdatePaymentRequest() {
-    }
-
-    public String getEmployee() {
-        return employee;
-    }
-
-    public void setEmployee(String employee) {
-        this.employee = employee;
-    }
-
-    public String getPeriod() {
-        return period;
-    }
-
-    public void setPeriod(String period) {
-        this.period = period;
-    }
-
-    public Long getSalary() {
-        return salary;
-    }
-
-    public void setSalary(Long salary) {
-        this.salary = salary;
-    }
 }

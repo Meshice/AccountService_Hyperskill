@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "warnings": [
+    {
+      "code": "Trial",
+      "cwe": 0,
+      "level": 0,
+      "positions": [],
+      "message": "License was not entered. Please enter a valid PVS-Studio license or request a trial license at https://pvs-studio.com/en/pvs-studio/try-free/.",
+      "stacktrace": [
+        "com.pvsstudio.Main.checkLicense(Main.java:260)",
+        "com.pvsstudio.Main.main(Main.java:498)"
+      ],
+      "projects": [],
+      "favorite": false,
+      "falseAlarm": false
+    }
+  ]
+}

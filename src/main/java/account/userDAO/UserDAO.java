@@ -22,16 +22,6 @@ public interface UserDAO {
 
     void deleteUser(String email);
 
-    void changePassword(int id, String newPassword);
-
-    void addPayment(List<Payment> payment);
-
-    boolean findEmailPeriodUnique(Payment payment);
-
-    void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
-
-    List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee);
-
     void lockUnlockUser(String email, String operation);
 
 }

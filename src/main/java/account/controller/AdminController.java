@@ -1,11 +1,13 @@
 package account.controller;
 
+import account.dto.UserDto;
 import account.entity.User;
 import account.request.LockUnlockUserRequest;
 import account.request.UserRoleChangeRequest;
 import account.response.UserDeleteSuccessResponse;
 import account.service.Event;
 import account.service.LogService;
+import account.util.MappingUtils;
 import account.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/api/admin")
@@ -33,27 +36,38 @@ public class AdminController {
     @Autowired
     LogService logService;
 
+    @Autowired
+    MappingUtils mapper;
+
     @GetMapping("/user")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return new ResponseEntity<>(userService.getAllUsersOrderById(), HttpStatus.OK);
+    public ResponseEntity<List<UserDto>> getAllUsers() {
+        List<UserDto> usersDto = userService.getAllUsersOrderById().stream()
+                .map(user -> mapper.convertEntityToDto(user, UserDto.class))
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(usersDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/user/{email}")
     public ResponseEntity<UserDeleteSuccessResponse> deleteUser(@PathVariable(value = "email", required = false) String email,
                                                                 @AuthenticationPrincipal UserDetails userDetails,
                                                                 HttpServletRequest httpServletRequest) {
+
         userService.deleteUserByEmail(email);
         logService.addLogAdmin(Event.DELETE_USER, userDetails, null, email, httpServletRequest);
         return new ResponseEntity<>(new UserDeleteSuccessResponse(email, "Deleted successfully!"), HttpStatus.OK);
     }
 
     @PutMapping("/user/role")
-    public ResponseEntity<User> changeUserRole(@AuthenticationPrincipal UserDetails userDetails,
+    public ResponseEntity<UserDto> changeUserRole(@AuthenticationPrincipal UserDetails userDetails,
                                                @Valid @RequestBody UserRoleChangeRequest request, BindingResult bindingResult,
                                                HttpServletRequest httpServletRequest) {
-        User user = userService.changeUserRole(request);
+
+        User userEntity = userService.changeUserRole(request);
+        UserDto userDto = mapper.convertEntityToDto(userEntity, UserDto.class);
+
         logService.addLogAdmin(Event.valueOf(request.getOperation() + "_ROLE"), userDetails, request.getRole(), request.getUser(), httpServletRequest);
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     @PutMapping("/user/access")

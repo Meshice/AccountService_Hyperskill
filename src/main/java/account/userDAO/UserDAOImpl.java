@@ -10,10 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +23,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void update(User user) {
-        String sqlUpdateUserRequest = "UPDATE users SET email = ?, name = ?, lastname = ?, password = ?, role = ?, attempt = ?, locked = ?";
+        String sqlUpdateUserRequest = "UPDATE users SET email = ?, name = ?, lastname = ?, password = ?, role = ?, attempt = ?, locked = ? WHERE id = ?";
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdateUserRequest)) {
                 preparedStatement.setString(1, user.getEmail());
@@ -36,6 +33,7 @@ public class UserDAOImpl implements UserDAO {
                 preparedStatement.setString(5, user.getRole());
                 preparedStatement.setInt(6, user.getAttemptsForLogging());
                 preparedStatement.setBoolean(7, user.isLocked());
+                preparedStatement.setInt(8, user.getId());
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException ex) {
@@ -87,96 +85,6 @@ public class UserDAOImpl implements UserDAO {
             try (PreparedStatement preparedStatement = connection.prepareStatement(sqlGetAllUsersOrderById)) {
                 ResultSet resultSet = preparedStatement.executeQuery();
                 return mapRowToUserList(resultSet);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public void changePassword(int id, String newPassword) {
-        String sqlRequestChangePassword = "UPDATE users SET password = ? WHERE id = ?";
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestChangePassword)) {
-                preparedStatement.setString(1, newPassword);
-                preparedStatement.setInt(2, id);
-                preparedStatement.execute();
-            }
-        } catch (SQLException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
-    @Override
-    public void addPayment(List<Payment> payment) {
-        String sqlRequestAddPayment = "INSERT INTO payments(employee,period,salary) VALUES (?,?,?)";
-        try (Connection connection = dataSource.getConnection()) {
-            connection.setAutoCommit(false);
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestAddPayment)) {
-                for (Payment p : payment) {
-                    preparedStatement.setString(1, p.getEmployee().toLowerCase());
-                    preparedStatement.setString(2, p.getPeriod());
-                    preparedStatement.setLong(3, p.getSalary());
-                    preparedStatement.execute();
-                }
-            }
-            connection.commit();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    @Override
-    public boolean findEmailPeriodUnique(Payment p) {
-        String sqlRequestCheckUniquePeriodEmail = "SELECT * FROM payments WHERE employee = LOWER(?) AND period = ?";
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestCheckUniquePeriodEmail)) {
-                preparedStatement.setString(1, p.getEmployee());
-                preparedStatement.setString(2, p.getPeriod());
-                ResultSet resultSet = preparedStatement.executeQuery();
-                if (resultSet.next()) {
-                    return false;
-                }
-            }
-            return true;
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment) {
-        String sqlRequestAddNew = "UPDATE payments SET salary = ? WHERE employee = LOWER(?) AND period = ?";
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestAddNew)) {
-                preparedStatement.setLong(1, payment.getSalary());
-                preparedStatement.setString(2, payment.getEmployee());
-                preparedStatement.setString(3, payment.getPeriod());
-                preparedStatement.execute();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee) {
-        try (Connection connection = dataSource.getConnection()) {
-            if (period == null) {
-                try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM payments WHERE employee = LOWER(?)")) {
-                    preparedStatement.setString(1, employee);
-                    return mapRowPayment(preparedStatement.executeQuery());
-                }
-            } else {
-                try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM payments WHERE employee = LOWER(?) AND period = ?")) {
-                    preparedStatement.setString(1, employee);
-                    preparedStatement.setString(2, period);
-                    return mapRowPayment(preparedStatement.executeQuery());
-                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -264,7 +172,7 @@ public class UserDAOImpl implements UserDAO {
         List<PaymentUserInfo> list = new ArrayList<>();
         while (resultSet.next()) {
             PaymentUserInfo info = new PaymentUserInfo();
-            info.setPeriod(resultSet.getString("period"));
+            info.setPeriod(resultSet.getDate("period"));
             info.setSalary(Long.toString(resultSet.getLong("salary")));
             list.add(info);
         }

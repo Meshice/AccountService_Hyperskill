@@ -10,9 +10,11 @@ import account.request.UpdatePaymentRequest;
 import account.request.UserRoleChangeRequest;
 import account.response.PasswordChangeSuccessResponse;
 import account.response.PaymentAddSuccessResponse;
+import account.response.PaymentUserInfo;
 import account.response.UserDeleteSuccessResponse;
 import account.service.Event;
 import account.service.LogService;
+import account.service.PaymentService;
 import account.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,14 +37,16 @@ import java.util.Map;
 public class EmployeeController {
 
     @Autowired
-    UserService userService;
+    PaymentService paymentService;
 
     @Autowired
     LogService logService;
 
-    @GetMapping("/empl/payment")
-    public ResponseEntity<?> getPayment(@AuthenticationPrincipal UserDetails userDetails, @RequestParam(required = false) @Pattern(regexp = "(0[1-9]|1[0-2])-\\d\\d\\d\\d", message = "Wrong date!") String period) {
-        return userService.getInfoUserByPeriod(period, userDetails);
+    @GetMapping("/payment")
+    public ResponseEntity<List<PaymentUserInfo>> getPayment(@AuthenticationPrincipal UserDetails userDetails, @RequestParam(required = false) @Pattern(regexp = "(0[1-9]|1[0-2])-\\d\\d\\d\\d", message = "Wrong date!") String period) {
+
+        List<PaymentUserInfo> payments = paymentService.getInfoUserByPeriod(period, userDetails);
+        return new ResponseEntity<>(payments, HttpStatus.OK);
     }
 
 

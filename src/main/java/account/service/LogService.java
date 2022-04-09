@@ -1,5 +1,6 @@
 package account.service;
 
+import account.dto.LogDto;
 import account.entity.Log;
 import account.entity.User;
 import account.request.LockUnlockUserRequest;

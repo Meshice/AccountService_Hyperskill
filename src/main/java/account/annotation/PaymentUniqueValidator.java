@@ -1,20 +1,26 @@
 package account.annotation;
 
+import account.dto.PaymentDto;
 import account.entity.Payment;
-import account.service.UserService;
+import account.service.PaymentService;
+import account.userDAO.PaymentDAO;
+import account.util.MappingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class PaymentUniqueValidator implements ConstraintValidator<PaymentUnique, Payment> {
+public class PaymentUniqueValidator implements ConstraintValidator<PaymentUnique, PaymentDto> {
 
     @Autowired
-    UserService userService;
+    PaymentService service;
+
+    @Autowired
+    MappingUtils mapper;
 
     @Override
-    public boolean isValid(Payment value, ConstraintValidatorContext context) {
-        return userService.checkUniquePayment(value);
+    public boolean isValid(PaymentDto value, ConstraintValidatorContext context) {
+        return service.checkUniquePayment(mapper.convertDtoToEntity(value, Payment.class));
     }
 
     @Override

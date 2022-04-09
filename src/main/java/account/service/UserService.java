@@ -1,5 +1,7 @@
 package account.service;
 
+import account.dto.DtoMarker;
+import account.entity.EntityMarker;
 import account.entity.Payment;
 import account.entity.User;
 import account.request.LockUnlockUserRequest;
@@ -18,33 +20,23 @@ import java.util.List;
 
 public interface UserService {
 
-    public void update(User user);
+    void update(User user);
 
-    public User signUp(User user);
+    User signUp(User user);
 
-    public User signIn(UserDetails userDetails);
+    User findUserByUsername(String username);
 
-    public User findUserByUsername(String username);
+    PasswordChangeSuccessResponse changePassword(String newPassword, UserDetails userDetails);
 
-    public ResponseEntity<PasswordChangeSuccessResponse> changePassword(PasswordChangeRequest changeRequest, UserDetails userDetails, BindingResult result);
+    boolean checkUserExist(String user);
 
-    public ResponseEntity<PaymentAddSuccessResponse> addPayment(List<Payment> request);
-
-    public boolean checkUniquePayment(Payment payment);
-
-    public boolean checkUserExist(String user);
-
-    public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
-
-    public ResponseEntity getInfoUserByPeriod(String period, UserDetails userDetails);
 
     List<User> getAllUsersOrderById();
 
-    public void deleteUserByEmail(String email);
+    void deleteUserByEmail(String email);
 
-    public User changeUserRole(UserRoleChangeRequest request);
+    User changeUserRole(UserRoleChangeRequest request);
 
-    public void lockUnlockUser(LockUnlockUserRequest request);
-
+    void lockUnlockUser(LockUnlockUserRequest request);
 
 }

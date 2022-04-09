@@ -1,7 +1,16 @@
 package account.request;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.validation.constraints.Pattern;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserRoleChangeRequest {
 
     private String user;
@@ -9,30 +18,4 @@ public class UserRoleChangeRequest {
     @Pattern(regexp = "GRANT|REMOVE", message = "Use only GRAND and REMOVE operations!")
     private String operation;
 
-    public UserRoleChangeRequest() {
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getOperation() {
-        return operation;
-    }
-
-    public void setOperation(String operation) {
-        this.operation = operation;
-    }
 }
