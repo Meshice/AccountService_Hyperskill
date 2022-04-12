@@ -57,7 +57,7 @@ public class LogServiceImpl implements LogService {
                 break;
             case GRANT_ROLE:
             case REMOVE_ROLE:
-                log.setObject(String.format(event.getEventMessage(), role.substring(5), updatedUserEmail.toLowerCase()));
+                log.setObject(String.format(event.getEventMessage(), role, updatedUserEmail.toLowerCase()));
                 break;
         }
         logDAO.addLog(log);

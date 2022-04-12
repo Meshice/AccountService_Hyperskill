@@ -1,17 +1,19 @@
 package account.service;
 
+import account.dto.PaymentDto;
 import account.entity.Payment;
 import account.entity.User;
-import account.request.UpdatePaymentRequest;
-import account.response.PaymentUserInfo;
 import account.userDAO.PaymentDAO;
-import account.userDAO.UserDAO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Comparator;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -33,36 +35,60 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment) {
+    public void updatePaymentByEmployeePeriod(Payment payment) {
         paymentDAO.updatePaymentByEmployeePeriod(payment);
     }
 
     @Override
-    public List<PaymentUserInfo> getInfoUserByPeriod(String period, UserDetails userDetails) {
-        List<PaymentUserInfo> paymentUserInfoList = paymentDAO.getInfoUserByPeriod(period, userDetails.getUsername());
+    public List<PaymentDto> getInfoUserByPeriod(String period, UserDetails userDetails) {
+        List<Payment> payments = paymentDAO.getInfoUserByPeriod(period, userDetails.getUsername());
+        if (payments.size() == 0) {
+            return Collections.emptyList();
+        }
         User user = findByEmailIgnoreCase(userDetails.getUsername());
-        paymentUserInfoList.sort(Comparator.comparing(PaymentUserInfo::getPeriod).reversed());
-//        for (PaymentUserInfo info : paymentUserInfoList) {
-//            info.setPeriod(info.getPeriod().replaceFirst("0*(?=[^0])", ""));
-//            Pattern pattern = Pattern.compile("\\d*");
-//            Matcher matcher = pattern.matcher(info.getPeriod());
-//            int numberOfMonth = 1;
-//            if (matcher.find()) {
-//                numberOfMonth = Integer.parseInt(matcher.group());
-//            }
-//            info.setPeriod(info.getPeriod().replaceFirst("\\d*", Month.of(numberOfMonth).getDisplayName(TextStyle.FULL, Locale.US)));
-//            String salary = info.getSalary();
-//            String dollarSalary = salary.substring(0, salary.length() - 2);
-//            if (dollarSalary.equals("")) {
-//                dollarSalary = "0";
-//            }
-//            String centSalary = salary.substring(salary.length() - 2);
-//            info.setSalary(String.format("%s dollar(s) %s cent(s)", dollarSalary, centSalary));
-//            info.setName(user.getName());
-//            info.setLastname(user.getLastname());
-//        }
-        return paymentUserInfoList;
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User not found!");
+        }
+        return preparePaymentDto(payments, user);
     }
+
+    private List<PaymentDto> preparePaymentDto(List<Payment> payments, User user) {
+        String name = user.getName();
+        String lastname = user.getLastname();
+
+        return payments.stream()
+                .sorted(Comparator.comparing(Payment::getPeriod).reversed())
+                .map(this::convertEntityPaymentToDto)
+                .peek(paymentDto -> {
+                    paymentDto.setName(name);
+                    paymentDto.setLastname(lastname);
+                    String salary = paymentDto.getSalary();
+                    paymentDto.setSalary(salary.strip().replaceAll("^0*","") + " dollar(s)");
+                }).collect(Collectors.toList());
+    }
+
+
+    public Payment convertDtoPaymentToEntity(PaymentDto dto) {
+        Payment payment = new Payment();
+        payment.setEmployee(dto.getEmployee());
+        payment.setSalary(Long.parseLong(dto.getSalary()));
+        try {
+            Date date = new SimpleDateFormat("dd-MM-yyyy").parse(dto.getPeriod());
+            payment.setPeriod(date);
+        } catch (ParseException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return payment;
+    }
+
+    public PaymentDto convertEntityPaymentToDto(Payment entity) {
+        PaymentDto paymentDto = new PaymentDto();
+        paymentDto.setEmployee(entity.getEmployee());
+        paymentDto.setSalary(entity.getSalary().toString());
+        paymentDto.setPeriod(new SimpleDateFormat("MMMMM-yyyy", Locale.ENGLISH).format(entity.getPeriod()));
+        return paymentDto;
+    }
+
 
     private User findByEmailIgnoreCase(String email) {
         return userService.findUserByUsername(email);

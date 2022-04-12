@@ -1,9 +1,6 @@
 package account.userDAO;
 
-import account.entity.Payment;
 import account.entity.User;
-import account.request.UpdatePaymentRequest;
-import account.response.PaymentUserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
@@ -13,7 +10,6 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Repository
 public class UserDAOImpl implements UserDAO {
@@ -161,21 +157,11 @@ public class UserDAOImpl implements UserDAO {
             user.setRole(resultSet.getString("role"));
             user.setLocked(resultSet.getBoolean("locked"));
             user.setAttemptsForLogging(resultSet.getInt("attempt"));
-            user.setRoles(List.of(user.getRole().split(" ")));
+            user.setRoles(new ArrayList<>(List.of(user.getRole().split(" "))));
             return user;
         } else {
             return null;
         }
     }
 
-    private List<PaymentUserInfo> mapRowPayment(ResultSet resultSet) throws SQLException {
-        List<PaymentUserInfo> list = new ArrayList<>();
-        while (resultSet.next()) {
-            PaymentUserInfo info = new PaymentUserInfo();
-            info.setPeriod(resultSet.getDate("period"));
-            info.setSalary(Long.toString(resultSet.getLong("salary")));
-            list.add(info);
-        }
-        return list;
-    }
 }

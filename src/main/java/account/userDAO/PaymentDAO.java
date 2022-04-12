@@ -1,8 +1,6 @@
 package account.userDAO;
 
 import account.entity.Payment;
-import account.request.UpdatePaymentRequest;
-import account.response.PaymentUserInfo;
 
 import java.util.List;
 
@@ -13,7 +11,7 @@ public interface PaymentDAO {
 
     boolean findEmailPeriodUnique(Payment payment);
 
-    void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
+    void updatePaymentByEmployeePeriod(Payment payment);
 
-    List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee);
+    List<Payment> getInfoUserByPeriod(String period, String employee);
 }

@@ -2,9 +2,7 @@ package account.controller;
 
 import account.dto.PaymentDto;
 import account.entity.Payment;
-import account.request.UpdatePaymentRequest;
 import account.response.PaymentAddSuccessResponse;
-import account.util.MappingUtils;
 import account.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +27,11 @@ public class AccountantController {
     @Autowired
     PaymentService paymentService;
 
-    @Autowired
-    MappingUtils mapper;
 
     @PostMapping("/payments")
     public ResponseEntity<PaymentAddSuccessResponse> addPayments(@RequestBody @Size(min = 1) List<@Valid PaymentDto> paymentsDto, BindingResult br) {
         List<Payment> paymentsEntity = paymentsDto.stream()
-                .map(payment -> mapper.convertDtoToEntity(payment, Payment.class))
+                .map(payment -> paymentService.convertDtoPaymentToEntity(payment))
                 .collect(Collectors.toList());
 
         paymentService.addPayment(paymentsEntity);
@@ -43,9 +39,9 @@ public class AccountantController {
     }
 
     @PutMapping("/payments")
-    public ResponseEntity<PaymentAddSuccessResponse> updatePayment(@RequestBody @Valid UpdatePaymentRequest payment) {
-
-        paymentService.updatePaymentByEmployeePeriod(payment);
+    public ResponseEntity<PaymentAddSuccessResponse> updatePayment(@RequestBody @Valid PaymentDto paymentDto) {
+        Payment paymentEntity = paymentService.convertDtoPaymentToEntity(paymentDto);
+        paymentService.updatePaymentByEmployeePeriod(paymentEntity);
         return ResponseEntity.ok(new PaymentAddSuccessResponse("Updated successfully!"));
     }
 

@@ -1,20 +1,10 @@
 package account.service;
 
-import account.dto.DtoMarker;
-import account.entity.EntityMarker;
-import account.entity.Payment;
 import account.entity.User;
 import account.request.LockUnlockUserRequest;
-import account.request.PasswordChangeRequest;
-import account.request.UpdatePaymentRequest;
 import account.request.UserRoleChangeRequest;
 import account.response.PasswordChangeSuccessResponse;
-import account.response.PaymentAddSuccessResponse;
-import account.response.PaymentUserInfo;
-import org.springframework.http.HttpRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.BindingResult;
 
 import java.util.List;
 

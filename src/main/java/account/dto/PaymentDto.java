@@ -1,17 +1,18 @@
 package account.dto;
 
+import account.annotation.DateValid;
 import account.annotation.EmployeeExist;
 import account.annotation.PaymentUnique;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.sql.Date;
 
 @Getter
@@ -20,19 +21,26 @@ import java.sql.Date;
 @PaymentUnique
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentDto implements DtoMarker {
+@ToString
+public class PaymentDto {
 
     @NotBlank(message = "Employee's email mustn't be empty")
     @EmployeeExist
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String employee;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM-yyyy")
-//    @Pattern(regexp = "(0[1-9]|1[0-2])-\\d\\d\\d\\d",message = "Payment's period must have format:'MM-yyyy'")
-    private Date period;
+    @DateValid(pattern = "dd-MM-yyyy")
+    private String period;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String name;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String lastname;
 
     @Min(value = 0, message = "Employee's salary must be non-negative!")
     @NotNull(message = "Employee's salary must be written!")
-    private int salary;
+    private String salary;
 
 }
 

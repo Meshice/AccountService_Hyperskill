@@ -1,18 +1,11 @@
 package account.service;
 
 
-import account.dto.DtoMarker;
-import account.dto.UserDto;
-import account.entity.EntityMarker;
-import account.entity.Payment;
 import account.entity.User;
 import account.request.LockUnlockUserRequest;
-import account.request.UpdatePaymentRequest;
 import account.request.UserRoleChangeRequest;
 import account.response.PasswordChangeSuccessResponse;
-import account.response.PaymentUserInfo;
 import account.userDAO.UserDAO;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,8 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.lang.reflect.Type;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,20 +29,20 @@ public class UserServiceImpl implements UserService {
     @Autowired
     LogService service;
 
-    private final ModelMapper modelMapper = new ModelMapper();
-
     private final List<String> allRoles = List.of("ROLE_USER","ROLE_ADMINISTRATOR","ROLE_ACCOUNTANT","ROLE_AUDITOR");
 
     @Override
     public User signUp(User user) {
         String email = user.getEmail();
-        if (checkEmailUserExist(email)) {
+        if (checkUserExist(email)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User exist!");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         String defaultRole = "ROLE_USER";
         user.setRole(defaultRole);
-        user.setRoles(List.of(defaultRole));
+        user.setRoles(new ArrayList<>() {{
+            add(defaultRole);
+        }});
         userDAO.save(user);
         int id = userDAO.findByEmailIgnoreCase(email).getId();
         user.setId(id);
@@ -109,7 +101,6 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
         }
-
         String newRole = "ROLE_" + request.getRole();
         if (!allRoles.contains(newRole)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found!");
@@ -135,7 +126,6 @@ public class UserServiceImpl implements UserService {
         if (userRoles.contains(addRole)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user already have this role!");
         }
-
         checkRoleGroupIntersection(addRole, userRoles);
         userRoles.add(addRole);
     }
@@ -180,10 +170,6 @@ public class UserServiceImpl implements UserService {
         userDAO.lockUnlockUser(request.getUser(), request.getOperation());
     }
 
-
-    private boolean checkEmailUserExist(String email) {
-        return userDAO.findByEmailIgnoreCase(email) != null;
-    }
 
 
     @Override

@@ -1,13 +1,7 @@
 package account.userDAO;
 
-import account.entity.Payment;
 import account.entity.User;
-import account.request.UpdatePaymentRequest;
-import account.response.PasswordChangeSuccessResponse;
-import account.response.PaymentUserInfo;
-import org.springframework.http.ResponseEntity;
 
-import java.sql.ResultSet;
 import java.util.List;
 
 public interface UserDAO {

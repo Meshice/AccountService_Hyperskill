@@ -1,18 +1,13 @@
 package account.userDAO;
 
 import account.entity.Payment;
-import account.request.UpdatePaymentRequest;
-import account.response.PaymentUserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,18 +19,18 @@ public class PaymentDAOImpl implements PaymentDAO {
     DataSource dataSource;
 
     @Override
-    public List<PaymentUserInfo> getInfoUserByPeriod(String period, String employee) {
+    public List<Payment> getInfoUserByPeriod(String period, String employee) {
         try (Connection connection = dataSource.getConnection()) {
             if (period == null) {
                 try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM payments WHERE employee = LOWER(?)")) {
                     preparedStatement.setString(1, employee);
-                    return mapRowPayment(preparedStatement.executeQuery());
+                    return mapRowPayments(preparedStatement.executeQuery());
                 }
             } else {
                 try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM payments WHERE employee = LOWER(?) AND period = ?")) {
                     preparedStatement.setString(1, employee);
                     preparedStatement.setString(2, period);
-                    return mapRowPayment(preparedStatement.executeQuery());
+                    return mapRowPayments(preparedStatement.executeQuery());
                 }
             }
         } catch (SQLException ex) {
@@ -45,13 +40,13 @@ public class PaymentDAOImpl implements PaymentDAO {
     }
 
     @Override
-    public void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment) {
+    public void updatePaymentByEmployeePeriod(Payment payment) {
         String sqlRequestAddNew = "UPDATE payments SET salary = ? WHERE employee = LOWER(?) AND period = ?";
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestAddNew)) {
                 preparedStatement.setLong(1, payment.getSalary());
                 preparedStatement.setString(2, payment.getEmployee());
-                preparedStatement.setString(3, payment.getPeriod());
+                preparedStatement.setDate(3, new Date(payment.getPeriod().getTime()));
                 preparedStatement.execute();
             }
         } catch (SQLException ex) {
@@ -66,7 +61,7 @@ public class PaymentDAOImpl implements PaymentDAO {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestCheckUniquePeriodEmail)) {
                 preparedStatement.setString(1, p.getEmployee());
-                preparedStatement.setDate(2,p.getPeriod());
+                preparedStatement.setDate(2, new Date(p.getPeriod().getTime()));
                 ResultSet resultSet = preparedStatement.executeQuery();
                 if (resultSet.next()) {
                     return false;
@@ -87,7 +82,7 @@ public class PaymentDAOImpl implements PaymentDAO {
             try (PreparedStatement preparedStatement = connection.prepareStatement(sqlRequestAddPayment)) {
                 for (Payment p : payment) {
                     preparedStatement.setString(1, p.getEmployee().toLowerCase());
-                    preparedStatement.setDate(2, p.getPeriod());
+                    preparedStatement.setDate(2, new Date(p.getPeriod().getTime()));
                     preparedStatement.setLong(3, p.getSalary());
                     preparedStatement.execute();
                 }
@@ -98,14 +93,27 @@ public class PaymentDAOImpl implements PaymentDAO {
         }
     }
 
-    private List<PaymentUserInfo> mapRowPayment(ResultSet resultSet) throws SQLException {
-        List<PaymentUserInfo> list = new ArrayList<>();
+    private List<Payment> mapRowPayments(ResultSet resultSet) throws SQLException {
+        List<Payment> payments = new ArrayList<>();
         while (resultSet.next()) {
-            PaymentUserInfo info = new PaymentUserInfo();
-            info.setPeriod(resultSet.getDate("period"));
-            info.setSalary(Long.toString(resultSet.getLong("salary")));
-            list.add(info);
+            Payment payment = new Payment();
+            payment.setId(resultSet.getInt("id"));
+            payment.setEmployee(resultSet.getString("employee"));
+            payment.setPeriod(new java.util.Date(resultSet.getDate("period").getTime()));
+            payment.setSalary(resultSet.getLong("salary"));
+            payments.add(payment);
         }
-        return list;
+        return payments;
+    }
+
+    private Payment mapRowPayment(ResultSet resultSet) throws SQLException {
+        Payment payment = new Payment();
+        if (resultSet.next()) {
+            payment.setId(resultSet.getInt("id"));
+            payment.setEmployee(resultSet.getString("employee"));
+            payment.setPeriod(new java.util.Date(resultSet.getDate("period").getTime()));
+            payment.setSalary(resultSet.getLong("salary"));
+        }
+        return payment;
     }
 }

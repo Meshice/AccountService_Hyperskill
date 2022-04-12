@@ -1,8 +1,7 @@
 package account.service;
 
+import account.dto.PaymentDto;
 import account.entity.Payment;
-import account.request.UpdatePaymentRequest;
-import account.response.PaymentUserInfo;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -13,7 +12,11 @@ public interface PaymentService {
 
     boolean checkUniquePayment(Payment payment);
 
-    void updatePaymentByEmployeePeriod(UpdatePaymentRequest payment);
+    void updatePaymentByEmployeePeriod(Payment payment);
 
-    List<PaymentUserInfo> getInfoUserByPeriod(String period, UserDetails userDetails);
+    List<PaymentDto> getInfoUserByPeriod(String period, UserDetails userDetails);
+
+    public Payment convertDtoPaymentToEntity(PaymentDto dto);
+
+    public PaymentDto convertEntityPaymentToDto(Payment entity);
 }

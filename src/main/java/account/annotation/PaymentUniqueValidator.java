@@ -15,12 +15,9 @@ public class PaymentUniqueValidator implements ConstraintValidator<PaymentUnique
     @Autowired
     PaymentService service;
 
-    @Autowired
-    MappingUtils mapper;
-
     @Override
     public boolean isValid(PaymentDto value, ConstraintValidatorContext context) {
-        return service.checkUniquePayment(mapper.convertDtoToEntity(value, Payment.class));
+        return service.checkUniquePayment(service.convertDtoPaymentToEntity(value));
     }
 
     @Override
