@@ -1,6 +1,7 @@
 package account.entity;
 
 import lombok.*;
+import account.entity.*;
 
 import javax.persistence.*;
 import java.util.List;

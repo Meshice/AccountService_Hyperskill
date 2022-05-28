@@ -83,4 +83,14 @@ public class LogServiceImpl implements LogService {
         logDAO.addLog(log);
     }
 
+
+    public void log(Event action, String subject, String object, String path) {
+        Log log = new Log();
+        log.setAction(action.toString());
+        log.setSubject(subject);
+        log.setObject(object);
+        log.setPath(path);
+        logDAO.addLog(log);
+    }
+
 }
